@@ -1,0 +1,36 @@
+# Dumi构建产物
+*.html
+*.js
+*.css
+*.map
+
+# 构建目录
+/dist/
+/build/
+
+# 依赖包
+node_modules/
+
+# 缓存文件
+.cache/
+.temp/
+
+# 日志文件
+*.log
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
