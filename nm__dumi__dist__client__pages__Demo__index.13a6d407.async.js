@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_tencent_mina_ui=self.webpackChunk_tencent_mina_ui||[]).push([[1009],{65149:function(f,n,e){e.r(n),e.d(n,{default:function(){return o}});var t=e(83744),u=e(62435),m=function(){var r=(0,t.UO)(),d=r.id,s=(0,t.WF)(),c=s.demos,i=c[d]||{},a=i.component;return a&&(0,u.createElement)(a)},o=m}}]);

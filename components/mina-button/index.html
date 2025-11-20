@@ -1,0 +1,196 @@
+<!DOCTYPE html><html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<style>
+
+  #root main {
+    margin-left: 20px;
+    max-width: 1280px;
+  }
+
+  .webapp-phone {
+    background: #f6f6f6;
+    box-sizing: border-box;
+    position: fixed;
+    right: 60px;
+    top: 100px;
+    border-radius: 6px;
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+  }
+
+  .webapp-phone-nav {
+    display: none;
+    height: 48px;
+    background: #fff;
+    padding: 8px;
+    border-radius: 6px 6px 0px 0px;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .webapp-phone-nav__icon {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    background: url('https://kftest.qq.com/images/qrCode.png') no-repeat center center;
+    background-size: cover;
+    display: none;
+  }
+
+  .webapp-phone-nav__icon:hover .webapp-phone-nav__code {
+    height: 136px;
+    border: 1px solid #ddd;
+  }
+
+  .webapp-phone-nav__code {
+    width: 136px;
+    position: absolute;
+    left: -142px;
+    top: 0;
+    border: none;
+    border-radius: 4px;
+    height: 0;
+    transition: height 0.3s;
+    overflow: hidden;
+    border: 0px solid #ddd;
+  }
+
+  .webapp-phone-nav__code-img {
+    width: 128px;
+    height: 128px;
+    margin: 4px;
+  }
+
+  .webapp-iframe {
+    width: 375px;
+    height: 640px;
+    border-radius: 0px 0px 6px 6px;
+    overflow: hidden;
+    border-top: 8px solid rgb(248, 248, 248);
+    border-top: none;
+  }
+</style>
+<link rel="stylesheet" href="/umi.34ba2475.css">
+<script>
+  // 订阅-发布模式
+  class Dep {                  // 订阅池
+    constructor(name){
+        this.id = new Date() //这里简单的运用时间戳做订阅池的ID
+        this.subs = []       //该事件下被订阅对象的集合
+    }
+    defined(){              // 添加订阅者
+        Dep.watch.add(this);
+    }
+    notify() {              //通知订阅者有变化
+        this.subs.forEach((e, i) => {
+            if(typeof e.update === 'function'){
+                try {
+                  e.update.apply(e)  //触发订阅者更新函数
+                } catch(err){
+                    console.log(err)
+                }
+            }
+        })
+    }
+  }
+  Dep.watch = null;
+  class Watch {
+    constructor(name, fn){
+        this.name = name;       //订阅消息的名称
+        this.id = new Date();   //这里简单的运用时间戳做订阅者的ID
+        this.callBack = fn;     //订阅消息发送改变时->订阅者执行的回调函数
+    }
+    add(dep) {                  //将订阅者放入dep订阅池
+      dep.subs.push(this);
+    }
+    update() {                  //将订阅者更新方法
+        var cb = this.callBack; //赋值为了不改变函数内调用的this
+        cb(this.name);
+    }
+  }
+  // 重写history方法，并添加window.addHistoryListener事件机制
+  var addHistoryMethod = (function(){
+      var historyDep = new Dep();
+      return function(name) {
+          if(name === 'historychange'){
+              return function(name, fn){
+                  var event = new Watch(name, fn)
+                  Dep.watch = event;
+                  historyDep.defined();
+                  Dep.watch = null;       //置空供下一个订阅者使用
+              }
+          } else if(name === 'pushState' || name === 'replaceState') {
+              var method = history[name];
+              return function(){
+                  method.apply(history, arguments);
+                  historyDep.notify();
+              }
+          }
+      }
+  }())
+  window.addHistoryListener = addHistoryMethod('historychange');
+  history.pushState =  addHistoryMethod('pushState');
+  history.replaceState =  addHistoryMethod('replaceState');
+
+
+  const { host, port } = window.location;
+  const iframeBaseUrl = port !== '8000' ? './m2w/program/miniprogram#!' : 'http://127.0.0.1:3000/m2w/program/miniprogram#!';
+  const iframeBaseHash = 'pages/home/index.html';
+  const addIframe = function (src) {
+    const container = document.body;
+    const currentIfarme = document.getElementById('webapp');
+    if (currentIfarme !== null) container.removeChild(currentIfarme);
+    const iframeDom = document.createElement('div');
+    iframeDom.id = 'webapp';
+    iframeDom.innerHTML = '<div class="webapp-phone"> <div class="webapp-phone-nav"> <div class="webapp-phone-nav__icon"> <div class="webapp-phone-nav__code"> <img class="webapp-phone-nav__code-img" src="https://kf-ui.cdn-go.cn/weapp-image/latest/weapp-sndt/images/miniprogram-components.png"></img> </div> </div> </div> <div class="webapp-iframe"> <iframe id="phonePreview" title="MC预览" width="100%" height="100%" style="border: none; opacity: 0" src=' + src + '></iframe></div></div>';
+    container.appendChild(iframeDom);
+    const timer = setTimeout(() => {
+      document.getElementById('phonePreview').style.opacity = 1;
+      clearTimeout(timer);
+    }, 100);
+  };
+
+
+  const getNewIUrl = function () {
+    const { hash } = window.location;
+    const docsHash = window.decodeURIComponent(hash.slice(2));
+    const docsHashArr = docsHash.split('#');
+    if (docsHashArr.length > 1 && this.isFirstLoad) {
+      return;
+    }
+    const [docsRouteHash] = docsHashArr;
+    let newHash = '';
+    if (docsRouteHash === '') {
+      newHash = iframeBaseHash;
+      hideWebApp();
+      return ;
+    } else if (hash === '#/' || hash === '#/guild' || hash.includes('#/Changelog')) {
+      hideWebApp();
+      return;
+    } else {
+      newHash = 'pages/' + docsRouteHash.replace('components/', '') + '/index.html';
+    }
+    const newIframeUrl = iframeBaseUrl + newHash;
+    addIframe(newIframeUrl);
+    this.isFirstLoad = true;
+  };
+
+  function hideWebApp() {
+    var element = document.getElementById('webapp');
+    element.style.display = 'none';
+  }
+
+  window.addEventListener('load', getNewIUrl);
+
+  window.addHistoryListener('history',function(e){
+      getNewIUrl();
+  })
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script src="/umi.3eed8fbe.js"></script>
+
+</body></html>
